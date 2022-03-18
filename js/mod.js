@@ -1,25 +1,28 @@
 let modInfo = {
 	name: "The Modding Tree",
-	id: "mymod",
-	author: "",
+	id: "bigtree",
+	author: "3^3=7",
 	pointsName: "points",
-	discordName: "",
-	discordLink: "",
-	initialStartPoints: new ExpantaNum (10), // Used for hard resets and new players
-	
-	offlineLimit: 1,  // In hours
+	discordName: "My server",
+	discordLink: "https://discord.gg/w2tJ96rEK5",
+	initialStartPoints: new ExpantaNum (0), // Used for hard resets and new players
+	offlineLimit: 0.08333333,  // 5 minute
 }
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0",
-	name: "",
+	num: "0.0.0.1",
+	name: "a BIG tree",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
-	<h3>v0.0</h3><br>
-		- Added things.<br>
-		- Added stuff.`
+	<h3>v0.0.0.1</h3><br>
+		- Added prestige point layer.<br>
+		- Added 8 upgrade.<br>
+		- Added Tree.<br>
+		- Added Shop. (wip)<br>
+		- Endgame: prestige upgrade 24.<br>
+		`
 
 let winText = `Congratulations! You have reached the end and beaten this game, but for now...`
 
@@ -42,6 +45,13 @@ function getPointGen() {
 		return new ExpantaNum(0)
 
 	let gain = new ExpantaNum(1)
+	gain=gain.times(tmp.p.appleEff)
+	gain=gain.times(tmp.p.bananaEff)
+	gain=gain.times(tmp.p.pineappleEff)
+	gain=gain.times(tmp.p.buyables[11].effect)
+	gain=gain.times(tmp.p.buyables[12].effect)
+	if(hasUpgrade('p',21)) gain=gain.times(upgradeEffect('p',21))
+	if(hasUpgrade('p',22)) gain=gain.times(upgradeEffect('p',22))
 	return gain
 }
 
@@ -55,7 +65,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return false
+	return hasUpgrade('p',24)
 }
 
 
