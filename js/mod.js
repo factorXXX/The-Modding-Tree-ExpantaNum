@@ -11,14 +11,20 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0.0.1",
+	num: "0.0.0.2",
 	name: "a BIG tree",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
+<h3>v0.0.0.2</h3><br>
+		- Added prestige point layer.<br>
+		- Added 7 upgrade.<br>
+		- Added Shop.<br>
+		- Added Buyer. (wip)<br>
+		- Endgame: prestige upgrade 41.<br>
 	<h3>v0.0.0.1</h3><br>
 		- Added prestige point layer.<br>
-		- Added 8 upgrade.<br>
+		- Added 9 upgrade.<br>
 		- Added Tree.<br>
 		- Added Shop. (wip)<br>
 		- Endgame: prestige upgrade 24.<br>
@@ -50,6 +56,7 @@ function getPointGen() {
 	gain=gain.times(tmp.p.pineappleEff)
 	gain=gain.times(tmp.p.buyables[11].effect)
 	gain=gain.times(tmp.p.buyables[12].effect)
+	gain=gain.times(tmp.p.buyables[13].effect)
 	if(hasUpgrade('p',21)) gain=gain.times(upgradeEffect('p',21))
 	if(hasUpgrade('p',22)) gain=gain.times(upgradeEffect('p',22))
 	return gain
