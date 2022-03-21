@@ -32,6 +32,7 @@ addLayer("p", {
         gain = new ExpantaNum(1)
         if(hasUpgrade('p',34)) gain=gain.times(upgradeEffect('p',34))
         gain=gain.times(tmp.p.buyables[23].effect)
+        gain=gain.times(tmp.b.buildingeff)
         return gain
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -277,6 +278,7 @@ update(diff){
                 let fruitmult=new ExpantaNum(1)
                 if(hasUpgrade('p',43))fruitmult=fruitmult.times(3)
                 if(hasUpgrade('p',51))fruitmult=fruitmult.times(2)
+                if(hasMilestone('b',1))fruitmult=fruitmult.times(2)
                 if(!hasUpgrade('p',31)){
                 if(a<(bananachance)) player.p.banana=player.p.banana.add(fruitmult)
                 else if(a<(bananachance+pineapplechance)) player.p.pineapple=player.p.pineapple.add(fruitmult)
@@ -443,7 +445,7 @@ update(diff){
             display() { return "Make an apple juice.<br>Cost: "+format(this.cost())+" Apples<br>Amount: "+getBuyableAmount(this.layer, this.id)+"<br>Effect: "+format(this.effect())+"x"},
             canAfford() { return player[this.layer].apple.gte(this.cost()) },
             buy() {
-                player[this.layer].apple = player[this.layer].apple.sub(this.cost())
+              if(!hasMilestone('b',3))  player[this.layer].apple = player[this.layer].apple.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
             effect(){
@@ -462,7 +464,7 @@ update(diff){
             display() { return "Make a banana juice.<br>Cost: "+format(this.cost())+" Bananas<br>Amount: "+getBuyableAmount(this.layer, this.id)+"<br>Effect: "+format(this.effect())+"x"},
             canAfford() { return player[this.layer].banana.gte(this.cost()) },
             buy() {
-                player[this.layer].banana = player[this.layer].banana.sub(this.cost())
+                if(!hasMilestone('b',3))player[this.layer].banana = player[this.layer].banana.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
             effect(){
@@ -486,7 +488,7 @@ update(diff){
                 return player[this.layer].pineapple.gte(this.cost()) 
         },
             buy() {
-                player[this.layer].pineapple = player[this.layer].pineapple.sub(this.cost())
+                if(!hasMilestone('b',3))player[this.layer].pineapple = player[this.layer].pineapple.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
             effect(){
@@ -674,11 +676,158 @@ update(diff){
         if(hasUpgrade('p',45)) mult=mult.times(upgradeEffect('p',45))
         if(hasUpgrade('p',52)) mult=mult.times(2)
         mult=mult.times(tmp.p.buyables[24].effect)
+        mult=mult.times(tmp.b.buildingeff)
         return mult
-    }
+    },
+    doReset(resettingLayer) {
+        let keep = [];
+        let extraUpgrades = [];
+        if(hasMilestone('b',0))extraUpgrades.push(25,31,41)
+        if(hasMilestone('b',1))extraUpgrades.push(44,52)
+        if(hasMilestone('b',2))extraUpgrades.push(43)
+        if(hasMilestone('b',4))extraUpgrades.push(45,55)
+        if (layers[resettingLayer].row > this.row) layerDataReset(this.layer, keep)
+        player[this.layer].upgrades.push(...extraUpgrades)
+    },
 })
 
 
+addLayer("b", {
+    startData() { return {                  // startData is a function that returns default data for a layer. 
+        unlocked: false,                     // You can add more variables here to add them to your layer.
+        points: new ExpantaNum(0), 
+        power: new ExpantaNum(0),           // "points" is the internal name for the main resource of the layer.
+    }},
+
+    color: "#DCDC48",                       // The color for this layer, which affects many elements.
+    resource: "buildings",            // The name of this layer's main prestige resource.
+    row: 1,                                 // The row this layer is on (0 is the first row).
+
+    baseResource: "dollars",                 // The name of the resource your prestige gain is based on.
+    baseAmount() { return player.p.coin },  // A function to return the current amount of baseResource.
+    
+    requires: new ExpantaNum(1e8),              // The amount of the base needed to  gain 1 of the prestige currency.
+                                            // Also the amount required to unlock the layer.
+    effect(){return new ExpantaNum(3).pow(player.b.points.sub(1))},
+    effectDescription(){return "Generate "+format(tmp.b.powergain)+" building power per second"},
+    type: "static",                         // Determines the formula used for calculating prestige currency.
+    exponent: 1.1,                          // "normal" prestige gain is (currency^exponent).
+    base:4,
+    gainMult() {                            // Returns your multiplier to your gain of the prestige resource.
+        return new ExpantaNum(1)               // Factor in any bonuses multiplying gain here.
+    },
+    gainExp() {                             // Returns your exponent to your gain of the prestige resource.
+        return new ExpantaNum(1)
+    },
+    update(diff){
+        player.b.power=player.b.power.add(tmp.b.powergain.times(diff))
+    },
+   branches:['p'],
+    layerShown() { return hasUpgrade('p',55)||player.b.unlocked},          // Returns a bool for if this layer's node should be visible in the tree.
+
+    upgrades: {
+        // Look in the upgrades docs to see what goes here!
+    },
+    buyables: {
+        11: {
+            cost(x) { return new ExpantaNum(1e9).times(new ExpantaNum(1.25).pow(x.pow(1.25))) },
+            display() { return "Make a Booster.<br>Cost: "+format(this.cost())+" Dollars<br>Amount: "+getBuyableAmount(this.layer, this.id)+"<br>Effect: "+format(this.effect())+"x"},
+            canAfford() { return player.p.coin.gte(this.cost()) },
+            buy() {
+                player.p.coin = player.p.coin.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            effect(){
+                let eff= getBuyableAmount(this.layer, this.id).add(1)
+                return eff
+            },
+            unlocked(){return hasMilestone('b',3)},
+            style(){return {
+                "width": "200px",
+                "height": "125px",
+            }}
+        },
+        12: {
+            cost(x) { return new ExpantaNum(1e14).times(new ExpantaNum(1.4).pow(x.pow(1.4))) },
+            display() { return "Make a Stronger.<br>Cost: "+format(this.cost())+" Prestige Points<br>Amount: "+getBuyableAmount(this.layer, this.id)+"<br>Effect: "+format(this.effect())+"x"},
+            canAfford() { return player.p.points.gte(this.cost()) },
+            buy() {
+                player.p.points = player.p.points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            effect(){
+                let eff= getBuyableAmount(this.layer, this.id).add(1)
+                return eff
+            },
+            unlocked(){return hasMilestone('b',4)},
+            style(){return {
+                "width": "200px",
+                "height": "125px",
+            }}
+        },
+    },
+    milestones: {
+        0: {
+            requirementDescription: "1 buildings",
+            effectDescription: "Keep Bigger Buff, Why It is cheaper and i want more feature! on reset.",
+            done() { return player.b.points.gte(1) }
+        },
+        1: {
+            requirementDescription: "2 buildings",
+            effectDescription: "Keep Fame and auto find buyer on reset. Double fruit gain on collect.",
+            done() { return player.b.points.gte(2) }
+        },
+        2: {
+            requirementDescription: "3 buildings",
+            effectDescription: "Building effect also boost point gain. Keep i want more fruit on reset.",
+            done() { return player.b.points.gte(3) }
+        },
+        3: {
+            requirementDescription: "4 buildings",
+            effectDescription: "Juice cost nothing. Unlock booster.",
+            done() { return player.b.points.gte(4) }
+        },
+        4: {
+            requirementDescription: "5 buildings",
+            effectDescription: "Keep more $$$$$ and more dollar. Unlock stronger.",
+            done() { return player.b.points.gte(5) }
+        },
+    },
+
+    tabFormat: {
+        "Main": {
+            content: [
+                "main-display",
+                "prestige-button",
+                "resource-display",
+                "blank",
+                "milestones",
+                "blank",
+                ["display-text", () =>{
+                    return `You have ${format(player.b.power)} building power, which boost money and prestige point gain by ${format(tmp.b.buildingeff)}`
+                }
+            ],
+            ],
+        },
+        "Building": {
+            content: [
+                "main-display",
+                "prestige-button",
+                "resource-display",
+                "blank",
+                ["row", [["buyable",11],"blank",["buyable",12]]]
+            ],
+            unlocked(){return hasMilestone('b',3)}
+        },
+    },
+    buildingeff(){return player.b.power.add(10).logBase(10).pow(2)},
+    powergain(){
+let gain=tmp.b.effect
+gain=gain.times(tmp.b.buyables[11].effect)
+gain=gain.times(tmp.b.buyables[12].effect)
+return gain
+    }
+})
 
 
 
