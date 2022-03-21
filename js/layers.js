@@ -10,10 +10,16 @@ addLayer("p", {
         pineapple:new ExpantaNum(0),
         cooldown:new ExpantaNum(8),
         coin:new ExpantaNum(0),
-        buyerprice1:new ExpantaNum(0),
-        buyerprice2:new ExpantaNum(0),
-        buyerprice3:new ExpantaNum(0),
+        buyerprice1:new ExpantaNum(2),
+        buyerprice2:new ExpantaNum(3),
+        buyerprice3:new ExpantaNum(5),
         buyername:"",
+        fame:new ExpantaNum(1),
+        advertisetimes:new ExpantaNum(0),
+        advertisetimes2:new ExpantaNum(0),
+        mode1:1,
+        mode2:1,
+        mode3:1,
     }},
     color: "#4BDC13",
     requires: new ExpantaNum(10), // Can be a function that takes requirement increases into account
@@ -115,8 +121,8 @@ addLayer("p", {
             currencyLayer:"p",
         },
         32: {
-            title:"Auto seller!",
-            description: "Sell 1 apple per second.",
+            title:"Simple boost",
+            description: "Triple point gain.",
             cost: new ExpantaNum(1500),
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
             currencyInternalName:"coin",
@@ -154,18 +160,107 @@ addLayer("p", {
         },
         41: {
             title:"I want more feature!",
-            description: "Unlock buyer. (wip)",
+            description: "Unlock buyer.",
             cost: new ExpantaNum(1e9),
-            unlocked(){return hasUpgrade((this.layer),35)},
-            
+            unlocked(){return hasUpgrade((this.layer),35)},            
+        },
+        42: {
+            title:"Better Juice!",
+            description: "juice effect is squared.",
+            cost: new ExpantaNum(5e4),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"coin",
+            currencyDisplayName:"dollars",
+            currencyLayer:"p",
+        },
+        43: {
+            title:"I want more fruit!",
+            description: "Triple fruit gain.",
+            cost: new ExpantaNum(5e9),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},            
+        },
+        44: {
+            title:"Fame",
+            description: "Unlock Fame (the last feature in this layer).",
+            cost: new ExpantaNum(1e5),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"coin",
+            currencyDisplayName:"dollars",
+            currencyLayer:"p",
+        },
+        45: {
+            title:"More Dollar",
+            description: "Prestige Point boost buyer buy price. (won't cost fame and the cost should be 1.1 instead)",
+            cost: new ExpantaNum(1.1),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"fame",
+            currencyDisplayName:"fame",
+            currencyLayer:"p",
+            onPurchase(){player.p.fame=player.p.fame.add(1.1)},
+            effect(){
+                let eff=player.p.points.add(10).logBase(10).pow(0.5)
+                if(hasUpgrade('p',55))eff=eff.pow(2)
+            return eff},
+            effectDisplay(){return format(upgradeEffect('p',45))+"x"}
+        },
+        51: {
+            title:"More Fame",
+            description: "Advertise cost is much cheaper and double fruit gain.",
+            cost: new ExpantaNum(3e5),
+            unlocked(){return hasUpgrade((this.layer),45)},
+            currencyInternalName:"coin",
+            currencyDisplayName:"dollars",
+            currencyLayer:"p",
+        },
+        52: {
+            title:"Auto find buyer.",
+            description: "Auto find buyer and double buyer buy price.",
+            cost: new ExpantaNum(2.5e11),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+        },
+        53: {
+            title:"Advertise +",
+            description: "Unlock ad advertise.",
+            cost: new ExpantaNum(1e6),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"coin",
+            currencyDisplayName:"dollars",
+            currencyLayer:"p",
+        },
+        54: {
+            title:"More $$$",
+            description: "Unlock new things to buy in shop.",
+            cost: new ExpantaNum(5e6),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"coin",
+            currencyDisplayName:"dollars",
+            currencyLayer:"p",
+        },
+        55: {
+            title:"More $$$$$",
+            description: "Square more dollar effect.",
+            cost: new ExpantaNum(1.5e7),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"coin",
+            currencyDisplayName:"dollars",
+            currencyLayer:"p",
         },
     },
 update(diff){
     player.p.cooldown=player.p.cooldown.sub(diff).max(0)
     if(hasUpgrade('p',25)&&player.p.cooldown.eq(0)) tmp.p.clickables[11].onClick()
-    if(hasUpgrade('p',32)&&player.p.apple.gte(1)){
-        player.p.apple=player.p.apple.sub(diff)
-        player.p.coin=player.p.coin.add(new ExpantaNum(2).times(diff))
+
+
+
+    if(player.p.mode1>1||player.p.mode2>1||player.p.mode3>1) {
+        if((player.p.mode1==2&&!player.p.buyerprice1.gte(tmp.p.costMult.times(2.25)))||
+        (player.p.mode1==3&&!player.p.buyerprice1.gte(tmp.p.costMult.times(4.05)))||
+        (player.p.mode2==2&&!player.p.buyerprice2.gte(tmp.p.costMult.times(3.25)))||
+        (player.p.mode2==3&&!player.p.buyerprice2.gte(tmp.p.costMult.times(5.85)))||
+        (player.p.mode3==2&&!player.p.buyerprice3.gte(tmp.p.costMult.times(6.25)))||
+        (player.p.mode3==3&&!player.p.buyerprice3.gte(tmp.p.costMult.times(11.25)))
+        )
+        tmp.p.clickables[41].onClick()
     }
 },
     clickables: {
@@ -179,16 +274,19 @@ update(diff){
                 let pineapplechance=0
                 if(hasUpgrade('p',13)) pineapplechance=pineapplechance+0.2
               
-
+                let fruitmult=new ExpantaNum(1)
+                if(hasUpgrade('p',43))fruitmult=fruitmult.times(3)
+                if(hasUpgrade('p',51))fruitmult=fruitmult.times(2)
                 if(!hasUpgrade('p',31)){
-                if(a<(bananachance)) player.p.banana=player.p.banana.add(1)
-                else if(a<(bananachance+pineapplechance)) player.p.pineapple=player.p.pineapple.add(1)
-                else  player.p.apple=player.p.apple.add(1)
+                if(a<(bananachance)) player.p.banana=player.p.banana.add(fruitmult)
+                else if(a<(bananachance+pineapplechance)) player.p.pineapple=player.p.pineapple.add(fruitmult)
+                else  player.p.apple=player.p.apple.add(fruitmult)
                 }
+               
                 else {
-                    if(Math.random()<0.5) player.p.pineapple=player.p.pineapple.add(1)
-                    if(Math.random()<0.625) player.p.banana=player.p.banana.add(1)
-                    if(Math.random()<0.75) player.p.apple=player.p.apple.add(1)
+                    if(Math.random()<0.5) player.p.pineapple=player.p.pineapple.add(fruitmult)
+                    if(Math.random()<0.625) player.p.banana=player.p.banana.add(fruitmult)
+                    if(Math.random()<0.75) player.p.apple=player.p.apple.add(fruitmult)
                 }
                 let tree=new ExpantaNum(1)
                 if(hasUpgrade('p',14)) tree=tree.add(1)
@@ -199,58 +297,144 @@ update(diff){
             }
         },
         21: {
-            display() {return `Sell a apple for 2 dollars`},
+            display() {return `Sell a apple for ${format(player.p.buyerprice1)} dollars`},
             canClick(){return player.p.apple.gte(1)},
             onClick(){
                 player.p.apple= player.p.apple.sub(1)
-                player.p.coin=player.p.coin.add(2)
+                player.p.coin=player.p.coin.add(player.p.buyerprice1)
             },
             unlocked(){return hasUpgrade('p',24)}
         },
         22: {
-            display() {return `Sell a banana for 3 dollars`},
+            display() {return `Sell a banana for ${format(player.p.buyerprice2)} dollars`},
             canClick(){return player.p.banana.gte(1)},
             onClick(){
                 player.p.banana= player.p.banana.sub(1)
-                player.p.coin=player.p.coin.add(3)
+                player.p.coin=player.p.coin.add(player.p.buyerprice2)
             },
             unlocked(){return hasUpgrade('p',24)}
         },
         23: {
-            display() {return `Sell a pineapple for 5 dollars`},
+            display() {return `Sell a pineapple for ${format(player.p.buyerprice3)} dollars`},
             canClick(){return player.p.pineapple.gte(1)},
             onClick(){
                 player.p.pineapple= player.p.pineapple.sub(1)
-                player.p.coin=player.p.coin.add(5)
+                player.p.coin=player.p.coin.add(player.p.buyerprice3)
             },
             unlocked(){return hasUpgrade('p',24)}
         },
         31: {
-            display() {return `Sell 50% apple for ${formatWhole(player.p.apple)} dollars`},
+            display() {return `Sell 50% apple for ${formatWhole(player.p.apple.div(2).times(player.p.buyerprice1))} dollars`},
             canClick(){return player.p.apple.gte(1)},
             onClick(){
                 player.p.apple= player.p.apple.div(2)
-                player.p.coin=player.p.coin.add(player.p.apple.times(2))
+                player.p.coin=player.p.coin.add(player.p.apple.times(player.p.buyerprice1))
             },
             unlocked(){return hasUpgrade('p',33)}
         },
         32: {
-            display() {return `Sell 50% banana for ${formatWhole(player.p.banana.times(1.5))} dollars`},
+            display() {return `Sell 50% banana for ${formatWhole(player.p.banana.div(2).times(player.p.buyerprice2))} dollars`},
             canClick(){return player.p.banana.gte(1)},
             onClick(){
                 player.p.banana= player.p.banana.div(2)
-                player.p.coin=player.p.coin.add(player.p.banana.times(3))
+                player.p.coin=player.p.coin.add(player.p.banana.times(player.p.buyerprice2))
             },
             unlocked(){return hasUpgrade('p',33)}
         },
         33: {
-            display() {return `Sell 50% pineapple for ${formatWhole(player.p.pineapple.times(2.5))} dollars`},
+            display() {return `Sell 50% pineapple for ${formatWhole(player.p.pineapple.div(2).times(player.p.buyerprice3))} dollars`},
             canClick(){return player.p.pineapple.gte(1)},
             onClick(){
                 player.p.pineapple= player.p.pineapple.div(2)
-                player.p.coin=player.p.coin.add(player.p.pineapple.times(5))
+                player.p.coin=player.p.coin.add(player.p.pineapple.times(player.p.buyerprice3))
             },
             unlocked(){return hasUpgrade('p',33)}
+        },
+        41: {
+            display() {return `Find a person to sell your fruit.`},
+            canClick(){return true},
+            onClick(){
+                player.p.buyerprice1=new ExpantaNum(Math.random()*4.5*tmp.p.costMult)
+                player.p.buyerprice2=new ExpantaNum(Math.random()*6.5*tmp.p.costMult)
+                player.p.buyerprice3=new ExpantaNum(Math.random()*12.5*tmp.p.costMult)
+                player.p.buyername=randomBuyer()
+            },
+            unlocked(){return hasUpgrade('p',41)}
+        },
+        51: {
+            display() {return `Find a Youtuber to advertise your fruit.<br>Cost: ${formatWhole(tmp.p.advertisecost)} Dollars`},
+            canClick(){return player.p.coin.gte(tmp.p.advertisecost)},
+            onClick(){
+                player.p.coin=player.p.coin.sub(tmp.p.advertisecost)
+                player.p.advertisetimes=player.p.advertisetimes.add(1)
+
+                let random=Math.random()
+                if(random<=0.05){
+                    player.p.fame=player.p.fame.sub(Math.random()*0.225).max(0.5)
+                    alert("The Youtuber has a PR disaster. So Your Fame is decrease!")
+                }
+                else if(random<=0.25){
+                    player.p.fame=player.p.fame.sub(Math.random()*0.05).max(0.5)
+                    alert("The advertisement is failed. Your Fame is decrease!")
+                }
+                else {
+                    player.p.fame=player.p.fame.add(Math.random()*0.4)
+                    alert("The advertisement is success!. Your Fame is increase!")
+                }
+
+            },
+            unlocked(){return hasUpgrade('p',41)}
+        },
+        52: {
+            display() {return `Use youtube to advertise your fruit.<br>Cost: ${formatWhole(tmp.p.advertisecost2)} Dollars`},
+            canClick(){return player.p.coin.gte(tmp.p.advertisecost2)},
+            onClick(){
+                player.p.coin=player.p.coin.sub(tmp.p.advertisecost2)
+                player.p.advertisetimes2=player.p.advertisetimes2.add(1)
+
+                let random=Math.random()
+                if(random<=0.01){
+                    player.p.fame=player.p.fame.add(Math.random()*0.01)
+                    alert("Every one use adblock now! You only get a little fame.")
+                }
+                else if(random<=0.25){
+                    player.p.fame=player.p.fame.add(Math.random()*0.25)
+                    alert("Some people use adblock now! You only get a little fame.")
+                }
+                else {
+                    player.p.fame=player.p.fame.add(Math.random()*0.75)
+                    alert("The advertisement is success!. Your Fame is increase!")
+                }
+
+            },
+            unlocked(){return hasUpgrade('p',53)}
+        },
+        61:{
+            display() {return `Auto find people who buy apple.<br>Mode: ${toTextMode(player.p.mode1)}`},
+            canClick(){return true},
+            onClick(){
+                player.p.mode1++
+                if(player.p.mode1>=4) player.p.mode1=1
+            },
+            unlocked(){return hasUpgrade('p',52)}
+        },
+        62:{
+            display() {return `Auto find people who buy banana.<br>Mode: ${toTextMode(player.p.mode2)}`},
+            canClick(){return true},
+            onClick(){
+                player.p.mode2++
+                if(player.p.mode2>=4) player.p.mode2=1
+            },
+            unlocked(){return hasUpgrade('p',52)}
+        },
+        63:{
+            display() {return `Auto find people who buy pineapple.<br>Mode: ${toTextMode(player.p.mode3)}`},
+            canClick(){return true},
+            onClick(){
+                player.p.mode3++
+                if(player.p.mode3>=4) player.p.mode3=1
+            },
+            unlocked(){return hasUpgrade('p',52)}
         },
     },
     buyables: {
@@ -262,7 +446,11 @@ update(diff){
                 player[this.layer].apple = player[this.layer].apple.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
-            effect(){return getBuyableAmount(this.layer, this.id).pow(0.4).add(1)},
+            effect(){
+                let eff= getBuyableAmount(this.layer, this.id).pow(0.4).add(1)
+                if(hasUpgrade('p',42)) eff=eff.pow(2)
+                return eff
+            },
             unlocked(){return hasUpgrade('p',23)},
             style(){return {
                 "width": "200px",
@@ -277,7 +465,11 @@ update(diff){
                 player[this.layer].banana = player[this.layer].banana.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
-            effect(){return getBuyableAmount(this.layer, this.id).pow(0.55).add(1)},
+            effect(){
+                let eff= getBuyableAmount(this.layer, this.id).pow(0.55).add(1)
+                if(hasUpgrade('p',42)) eff=eff.pow(2)
+                return eff
+            },
             unlocked(){return hasUpgrade('p',23)},
             style(){return {
                 "width": "200px",
@@ -297,7 +489,11 @@ update(diff){
                 player[this.layer].pineapple = player[this.layer].pineapple.sub(this.cost())
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
-            effect(){return getBuyableAmount(this.layer, this.id).pow(0.7).add(1)},
+            effect(){
+                let eff= getBuyableAmount(this.layer, this.id).pow(0.7).add(1)
+                if(hasUpgrade('p',42)) eff=eff.pow(2)
+                return eff
+            },
             unlocked(){return hasUpgrade('p',23)},
             style(){return {
                 "width": "200px",
@@ -354,6 +550,23 @@ update(diff){
             }},
             effect(){return new ExpantaNum(2).pow(getBuyableAmount(this.layer, this.id))}
         },
+        24: {
+            cost(x) { return new ExpantaNum(1e6).times(new ExpantaNum(4).pow(x.pow(1.4)).floor()) },
+            display() { return "Double Money gain.<br>Cost: "+format(this.cost())+" dollars<br>Level: "+getBuyableAmount(this.layer, this.id)
+        },
+            canAfford() { return player[this.layer].coin.gte(this.cost()) 
+        },
+            buy() {
+                player[this.layer].coin = player[this.layer].coin.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            unlocked(){return hasUpgrade('p',54)},
+            style(){return {
+                "width": "200px",
+                "height": "125px",
+            }},
+            effect(){return new ExpantaNum(2).pow(getBuyableAmount(this.layer, this.id))}
+        },
     },
     tabFormat: {
         "Main": {
@@ -402,7 +615,7 @@ update(diff){
             }
             ],
             'blank',       
-            ["row", [["buyable",21],"blank",["buyable",22],"blank",["buyable",23]]],
+            ["row", [["buyable",21],"blank",["buyable",22],"blank",["buyable",23],"blank",["buyable",24]]],
         ],   
             unlocked(){return hasUpgrade('p',24)}
         },
@@ -413,15 +626,33 @@ update(diff){
             "resource-display",
             "blank",
             ["display-text", () =>{
-                return `Buyer: ${player.p.buyername}<br>Apple Price: ${player.p.buyerprice1} dollars<br>
-                Banana Price: ${player.p.buyerprice2} dollars<br>
-                Pineapple Price: ${player.p.buyerprice3} dollars`
+                return `Buyer: ${player.p.buyername}<br>
+                Apple Price: ${format(player.p.buyerprice1)} dollars<br>
+                Banana Price: ${format(player.p.buyerprice2)} dollars<br>
+                Pineapple Price: ${format(player.p.buyerprice3)} dollars`
             }
             ],
             'blank',       
             ["clickable",41],
+            'blank',       
+            ["row", [["clickable",61],"blank",["clickable",62],"blank",["clickable",63]]],
         ],   
             unlocked(){return hasUpgrade('p',41)}
+        },
+        "Fame": {
+            content: [ 
+            "main-display",
+            "prestige-button",
+            "resource-display",
+            "blank",
+            ["display-text", () =>{
+                return `Fame: ${format(player.p.fame)}`
+            }
+            ],
+            'blank',       
+            ["row", [["clickable",51],"blank",["clickable",52],"blank",["clickable",53]]],
+        ],   
+            unlocked(){return hasUpgrade('p',44)}
         },
     },
 
@@ -429,5 +660,46 @@ update(diff){
     appleEff(){return player.p.apple.pow(0.4).add(1)},
     bananaEff(){return player.p.banana.pow(0.55).add(1)},
     pineappleEff(){return player.p.pineapple.pow(0.7).add(1)},
-    passiveGeneration(){return hasUpgrade('p',25)?1:0}
+    passiveGeneration(){return hasUpgrade('p',25)?1:0},
+    advertisecost(){     
+     if(!hasUpgrade('p',51))   return new ExpantaNum(1e4).times(new ExpantaNum(1.75).pow(player.p.advertisetimes.pow(1.4)))
+     return new ExpantaNum(1e4).times(new ExpantaNum(1.35).pow(player.p.advertisetimes.pow(1.35)))
+    },
+    advertisecost2(){    
+        return new ExpantaNum(1e5).times(new ExpantaNum(1.8).pow(player.p.advertisetimes2.pow(1.25)))
+       },
+    costMult(){
+        let mult=new ExpantaNum(1)
+        mult=mult.times(player.p.fame)
+        if(hasUpgrade('p',45)) mult=mult.times(upgradeEffect('p',45))
+        if(hasUpgrade('p',52)) mult=mult.times(2)
+        mult=mult.times(tmp.p.buyables[24].effect)
+        return mult
+    }
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+function randomBuyer(){
+    let buyer=["jacorb","thepaperpilot","acamaeda","pg132","3^3=7","randomtuba","mrredshark77","ducdat0507","cyxw","microwa","escapee","downvoid","Mkeyholder","Rick Ashley"]
+    let b=Math.random()
+    for(let a=0;a<=buyer.length-1;a++){
+       if(b>a/buyer.length&&b<(a+1)/buyer.length) return buyer[a]
+    }
+}
+
+function toTextMode(a){
+    if(a==1) return "Disabled."
+    if(a==2) return "bigger than 50% of maxium cost."
+    if(a==3) return "bigger than 90% of maxium cost."
+}

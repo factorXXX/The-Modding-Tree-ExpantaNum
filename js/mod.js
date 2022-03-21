@@ -11,13 +11,17 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0.0.2",
+	num: "0.0.0.3",
 	name: "a BIG tree",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
+<h3>v0.0.0.3</h3><br>
+		- Added 9 upgrade.<br>
+		- Added Buyer.<br>
+		- Added Fame.<br>
+		- Endgame: prestige upgrade 55.<br>
 <h3>v0.0.0.2</h3><br>
-		- Added prestige point layer.<br>
 		- Added 7 upgrade.<br>
 		- Added Shop.<br>
 		- Added Buyer. (wip)<br>
@@ -59,6 +63,7 @@ function getPointGen() {
 	gain=gain.times(tmp.p.buyables[13].effect)
 	if(hasUpgrade('p',21)) gain=gain.times(upgradeEffect('p',21))
 	if(hasUpgrade('p',22)) gain=gain.times(upgradeEffect('p',22))
+	if(hasUpgrade('p',32)) gain=gain.times(2)
 	return gain
 }
 
@@ -72,7 +77,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return hasUpgrade('p',24)
+	return hasUpgrade('p',55)
 }
 
 
