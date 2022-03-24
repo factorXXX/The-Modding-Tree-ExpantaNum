@@ -78,6 +78,13 @@ addLayer("p", {
             },
             effectDisplay(){return "+"+formatWhole(upgradeEffect('p',15))}
         },
+        16: {
+            title:"Better Fame",
+            description: "Fame effect ^1.5. (Req: 10 Fames)",
+            cost: new ExpantaNum(0),
+            canAfford(){return player.p.fame.gte(10)},
+            unlocked(){return hasMilestone('b',6)},
+        },
         21: {
             title:"None fruit booster",
             description: "Pprestige point bost point gain.",
@@ -111,6 +118,13 @@ addLayer("p", {
             description: "Auto collect fruit and gain 100% prestige points on reset per second. Tree Amount is double.",
             cost: new ExpantaNum(15000),
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+        },
+        26: {
+            title:"Super Building",
+            description: "Building effect base x2. (Req: 10 Buildings)",
+            cost: new ExpantaNum(0),
+            canAfford(){return player.b.points.gte(10)},
+            unlocked(){return hasMilestone('b',6)},
         },
         31: {
             title:"Why it is cheaper??",
@@ -159,6 +173,13 @@ addLayer("p", {
             currencyDisplayName:"dollars",
             currencyLayer:"p",
         },
+        36: {
+            title:"I almost forget juice.",
+            description: "Juice effect ^1.5. (Req: 175 total juice)",
+            cost: new ExpantaNum(0),
+            canAfford(){return getBuyableAmount('p',11).add(getBuyableAmount('p',12)).add(getBuyableAmount('p',13)).gte(175)},
+            unlocked(){return hasMilestone('b',6)},
+        },
         41: {
             title:"I want more feature!",
             description: "Unlock buyer.",
@@ -204,6 +225,16 @@ addLayer("p", {
             return eff},
             effectDisplay(){return format(upgradeEffect('p',45))+"x"}
         },
+        46: {
+            title:"Prestige Multipler",
+            description: "Prestige Point boost fruit gain.",
+            cost: new ExpantaNum(1e25),
+            unlocked(){return hasMilestone('b',6)},
+            effect(){
+                let eff=player.p.points.add(10).logBase(10).pow(0.628)
+            return eff},
+            effectDisplay(){return format(upgradeEffect('p',46))+"x"}
+        },
         51: {
             title:"More Fame",
             description: "Advertise cost is much cheaper and double fruit gain.",
@@ -246,6 +277,19 @@ addLayer("p", {
             currencyDisplayName:"dollars",
             currencyLayer:"p",
         },
+        56: {
+            title:"Point Pointless",
+            description: "Point gain x10000. (Req: 1e30 Points)",
+            cost: new ExpantaNum(0),
+            canAfford(){return player.points.gte(1e30)},
+            unlocked(){return hasMilestone('b',6)},
+        },
+        61: {
+            title:"True Building",
+            description: "Unlock the Lab",
+            cost: new ExpantaNum(5e27),
+            unlocked(){return hasMilestone('b',6)},
+        },
     },
 update(diff){
     player.p.cooldown=player.p.cooldown.sub(diff).max(0)
@@ -279,6 +323,9 @@ update(diff){
                 if(hasUpgrade('p',43))fruitmult=fruitmult.times(3)
                 if(hasUpgrade('p',51))fruitmult=fruitmult.times(2)
                 if(hasMilestone('b',1))fruitmult=fruitmult.times(2)
+                if(hasMilestone('b',5))fruitmult=fruitmult.times(player.b.points.add(1))
+                if(hasUpgrade('p',46)) fruitmult=fruitmult.times(upgradeEffect('p',46))
+                if(hasUpgrade('b',14)) fruitmult=fruitmult.times(3)
                 if(!hasUpgrade('p',31)){
                 if(a<(bananachance)) player.p.banana=player.p.banana.add(fruitmult)
                 else if(a<(bananachance+pineapplechance)) player.p.pineapple=player.p.pineapple.add(fruitmult)
@@ -296,6 +343,7 @@ update(diff){
                 tree=tree.add(getBuyableAmount(this.layer, 22))
                 if(hasUpgrade('p',25)) tree=tree.times(2)
                   player.p.cooldown=new ExpantaNum(8).div(tree)
+                  if(hasUpgrade('b',13))player.p.cooldown=new ExpantaNum(.05)
             }
         },
         21: {
@@ -451,6 +499,7 @@ update(diff){
             effect(){
                 let eff= getBuyableAmount(this.layer, this.id).pow(0.4).add(1)
                 if(hasUpgrade('p',42)) eff=eff.pow(2)
+                if(hasUpgrade('p',36)) eff=eff.pow(1.5)
                 return eff
             },
             unlocked(){return hasUpgrade('p',23)},
@@ -470,6 +519,7 @@ update(diff){
             effect(){
                 let eff= getBuyableAmount(this.layer, this.id).pow(0.55).add(1)
                 if(hasUpgrade('p',42)) eff=eff.pow(2)
+                if(hasUpgrade('p',36)) eff=eff.pow(1.5)
                 return eff
             },
             unlocked(){return hasUpgrade('p',23)},
@@ -494,6 +544,7 @@ update(diff){
             effect(){
                 let eff= getBuyableAmount(this.layer, this.id).pow(0.7).add(1)
                 if(hasUpgrade('p',42)) eff=eff.pow(2)
+                if(hasUpgrade('p',36)) eff=eff.pow(1.5)
                 return eff
             },
             unlocked(){return hasUpgrade('p',23)},
@@ -673,21 +724,29 @@ update(diff){
     costMult(){
         let mult=new ExpantaNum(1)
         mult=mult.times(player.p.fame)
+        if(hasUpgrade('p',16)) mult=mult.times(player.p.fame.pow(0.5))
         if(hasUpgrade('p',45)) mult=mult.times(upgradeEffect('p',45))
         if(hasUpgrade('p',52)) mult=mult.times(2)
         mult=mult.times(tmp.p.buyables[24].effect)
         mult=mult.times(tmp.b.buildingeff)
+        mult=mult.times(tmp.b.rpeffect)
+        if(hasUpgrade('b',12)) mult=mult.times(3)
         return mult
     },
     doReset(resettingLayer) {
         let keep = [];
         let extraUpgrades = [];
+
         if(hasMilestone('b',0))extraUpgrades.push(25,31,41)
         if(hasMilestone('b',1))extraUpgrades.push(44,52)
         if(hasMilestone('b',2))extraUpgrades.push(43)
         if(hasMilestone('b',4))extraUpgrades.push(45,55)
+
+        if(hasMilestone('b',6))keep.push("upgrades")
+        if(hasUpgrade('b',14))keep.push("buyables")
         if (layers[resettingLayer].row > this.row) layerDataReset(this.layer, keep)
-        player[this.layer].upgrades.push(...extraUpgrades)
+        
+        if(!hasMilstone('b',6))player[this.layer].upgrades.push(...extraUpgrades)
     },
 })
 
@@ -696,7 +755,11 @@ addLayer("b", {
     startData() { return {                  // startData is a function that returns default data for a layer. 
         unlocked: false,                     // You can add more variables here to add them to your layer.
         points: new ExpantaNum(0), 
-        power: new ExpantaNum(0),           // "points" is the internal name for the main resource of the layer.
+        power: new ExpantaNum(0),
+        researchpoint: new ExpantaNum(0),
+        researchpower: new ExpantaNum(0),
+        researchenergy: new ExpantaNum(0),
+                // "points" is the internal name for the main resource of the layer.
     }},
 
     color: "#DCDC48",                       // The color for this layer, which affects many elements.
@@ -708,7 +771,10 @@ addLayer("b", {
     
     requires: new ExpantaNum(1e8),              // The amount of the base needed to  gain 1 of the prestige currency.
                                             // Also the amount required to unlock the layer.
-    effect(){return new ExpantaNum(3).pow(player.b.points.sub(1))},
+    effect(){
+        let base=new ExpantaNum(3)
+        if(hasUpgrade('p',26))base=base.times(2)
+        return base.pow(player.b.points.sub(1))},
     effectDescription(){return "Generate "+format(tmp.b.powergain)+" building power per second"},
     type: "static",                         // Determines the formula used for calculating prestige currency.
     exponent: 1.1,                          // "normal" prestige gain is (currency^exponent).
@@ -721,12 +787,50 @@ addLayer("b", {
     },
     update(diff){
         player.b.power=player.b.power.add(tmp.b.powergain.times(diff))
+        player.b.researchenergy=player.b.researchenergy.add(tmp.b.buyables[21].effect.times(diff))
+        player.b.researchpower=player.b.researchpower.add(tmp.b.researchpowergain.times(diff))
+        if(player.b.researchpower.gte(tmp.b.researchpointnext)&&hasUpgrade('b',11))player.b.researchpoint=player.b.researchpoint.add(1)
     },
    branches:['p'],
     layerShown() { return hasUpgrade('p',55)||player.b.unlocked},          // Returns a bool for if this layer's node should be visible in the tree.
 
     upgrades: {
-        // Look in the upgrades docs to see what goes here!
+        11: {
+            title:"Start Here",
+            description: "Unlock research Point.",
+            cost: new ExpantaNum(250),
+            //unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"researchpower",
+            currencyDisplayName:"research power",
+            currencyLayer:"b",
+        },
+        12: {
+            title:"MSG",
+            description: "Triple money gain and building boost research power gain.",
+            cost: new ExpantaNum(500),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"researchpower",
+            currencyDisplayName:"research power",
+            currencyLayer:"b",
+        },
+        13: {
+            title:"genetic modification",
+            description: "Tree cooldown always 0.05s and fame boost research power gain.",
+            cost: new ExpantaNum(1e4),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"researchpower",
+            currencyDisplayName:"research power",
+            currencyLayer:"b",
+        },
+        14: {
+            title:"medicine",
+            description: "Fruit gain is triple and keep juices on reset.",
+            cost: new ExpantaNum(5e4),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"researchpower",
+            currencyDisplayName:"research power",
+            currencyLayer:"b",
+        },
     },
     buyables: {
         11: {
@@ -765,6 +869,24 @@ addLayer("b", {
                 "height": "125px",
             }}
         },
+        21: {
+            cost(x) { return new ExpantaNum(1e12).times(new ExpantaNum(1.65).pow(x.pow(1.325))) },
+            display() { return "Make a Generator.<br>Cost: "+format(this.cost())+" Building Power<br>Amount: "+getBuyableAmount(this.layer, this.id)+"<br>Effect: Gain "+format(this.effect())+" energy per second."},
+            canAfford() { return player.b.power.gte(this.cost()) },
+            buy() {
+                player.b.power = player.b.power.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+            effect(){
+                let eff= getBuyableAmount(this.layer, this.id)
+                return eff
+            },
+            unlocked(){return hasUpgrade('p',61)},
+            style(){return {
+                "width": "200px",
+                "height": "125px",
+            }}
+        },
     },
     milestones: {
         0: {
@@ -792,6 +914,16 @@ addLayer("b", {
             effectDescription: "Keep more $$$$$ and more dollar. Unlock stronger.",
             done() { return player.b.points.gte(5) }
         },
+        5: {
+            requirementDescription: "6 buildings",
+            effectDescription: "Building amount boost fruit gain.",
+            done() { return player.b.points.gte(6) }
+        },
+        6: {
+            requirementDescription: "8 buildings",
+            effectDescription: "Unlock New Upgrades and force reset layer. Keep every upgrade on reset.",
+            done() { return player.b.points.gte(8) }
+        },
     },
 
     tabFormat: {
@@ -800,9 +932,8 @@ addLayer("b", {
                 "main-display",
                 "prestige-button",
                 "resource-display",
-                "blank",
                 "milestones",
-                "blank",
+              
                 ["display-text", () =>{
                     return `You have ${format(player.b.power)} building power, which boost money and prestige point gain by ${format(tmp.b.buildingeff)}`
                 }
@@ -815,9 +946,28 @@ addLayer("b", {
                 "prestige-button",
                 "resource-display",
                 "blank",
-                ["row", [["buyable",11],"blank",["buyable",12]]]
+                ["row", [["buyable",11],"blank",["buyable",12],"blank",["buyable",21]]]
             ],
             unlocked(){return hasMilestone('b',3)}
+        },
+        "Lab": {
+            content: [
+                "main-display",
+                "prestige-button",
+                "resource-display",
+                "blank",
+                ["display-text", () =>{
+                    let a= `
+                    You have ${format(player.b.researchenergy)} energy, which generate ${format(tmp.b.researchpowergain)} research power per second.<br>
+                    You have ${format(player.b.researchpower)} research power.<br>
+                    `
+                    if(hasUpgrade('b',11)) a+=`You have ${format(player.b.researchpoint)} research point. which boost money and point gain by ${format(tmp.b.rpeffect)} (next at ${format(tmp.b.researchpointnext)} research power)`
+                    return a
+                }],
+                "blank",
+                "upgrades",
+            ],
+            unlocked(){return hasUpgrade('p',61)}
         },
     },
     buildingeff(){return player.b.power.add(10).logBase(10).pow(2)},
@@ -826,12 +976,51 @@ let gain=tmp.b.effect
 gain=gain.times(tmp.b.buyables[11].effect)
 gain=gain.times(tmp.b.buyables[12].effect)
 return gain
-    }
+    },
+    researchpowergain(){
+        let gain=player.b.researchenergy.pow(0.25)
+        if(hasUpgrade('b',12)) gain=gain.times(player.b.points.add(1).pow(1.25))
+        if(hasUpgrade('b',13)) gain=gain.times(player.p.fame.add(1).pow(0.75))
+        return gain
+    },
+
+    researchpointnext(){
+        return ExpantaNum.pow(10,player.b.researchpoint.add(1).pow(1.1))
+    },
+    rpeffect(){
+        return ExpantaNum.pow(5,player.b.researchpoint.pow(0.75))
+    },
 })
 
 
 
-
+addLayer("force", {
+    startData() { return {                  // startData is a function that returns default data for a layer. 
+        unlocked: true,                     // You can add more variables here to add them to your layer.
+        points: new ExpantaNum(0),             // "points" is the internal name for the main resource of the layer.
+    }},
+    color: "#ffffff",                       // The color for this layer, which affects many elements.
+    resource: "Force Reset",            // The name of this layer's main prestige resource.
+    row: "side",                                 // The row this layer is on (0 is the first row).
+    type: "none",                         // Determines the formula used for calculating prestige currency.
+    layerShown() { return hasMilestone('b',6) },          // Returns a bool for if this layer's node should be visible in the tree.
+symbol:"F",
+    clickables: {
+        11: {
+            display() {return "Force a row 1 reset"},
+            onClick(){doReset('p',true)},
+            canClick(){return true}
+        },
+        12: {
+            display() {return "Force a row 2 reset"},
+            onClick(){doReset('b',true)},
+            canClick(){return true}
+        },
+    },
+    tabFormat: [
+      "clickables"
+    ],
+})
 
 
 
