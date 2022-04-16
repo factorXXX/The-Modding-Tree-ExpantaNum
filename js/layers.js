@@ -759,9 +759,6 @@ addLayer("b", {
         researchpoint: new ExpantaNum(0),
         researchpower: new ExpantaNum(0),
         researchenergy: new ExpantaNum(0),
-        dna:[],
-        dnacooldown:new ExpantaNum(10),
-        chooseNum:null
                 // "points" is the internal name for the main resource of the layer.
     }},
 
@@ -793,11 +790,6 @@ addLayer("b", {
         player.b.researchenergy=player.b.researchenergy.add(tmp.b.buyables[21].effect.times(diff))
         player.b.researchpower=player.b.researchpower.add(tmp.b.researchpowergain.times(diff))
         if(player.b.researchpower.gte(tmp.b.researchpointnext)&&hasUpgrade('b',11))player.b.researchpoint=player.b.researchpoint.add(1)
-        player.b.dnacooldown=player.b.dnacooldown.sub(diff).max(0)
-        if(player.b.dnacooldown.lte(0)&&new ExpantaNum(player.b.dna.length).lte(4)) {
-            player.b.dna.push(new ExpantaNum(1))
-            player.b.dnacooldown=new ExpantaNum(10)
-        }
     },
    branches:['p'],
     layerShown() { return hasUpgrade('p',55)||player.b.unlocked},          // Returns a bool for if this layer's node should be visible in the tree.
@@ -813,7 +805,7 @@ addLayer("b", {
             currencyLayer:"b",
         },
         12: {
-            title:"Lab setting (1/18)",
+            title:"MSG",
             description: "Triple money gain and building boost research power gain.",
             cost: new ExpantaNum(500),
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
@@ -822,7 +814,7 @@ addLayer("b", {
             currencyLayer:"b",
         },
         13: {
-            title:"Lab setting (2/18)",
+            title:"genetic modification",
             description: "Tree cooldown always 0.05s and fame boost research power gain.",
             cost: new ExpantaNum(1e4),
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
@@ -831,98 +823,13 @@ addLayer("b", {
             currencyLayer:"b",
         },
         14: {
-            title:"Lab setting (3/18)",
+            title:"medicine",
             description: "Fruit gain is triple and keep juices on reset.",
             cost: new ExpantaNum(5e4),
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
             currencyInternalName:"researchpower",
             currencyDisplayName:"research power",
             currencyLayer:"b",
-        },
-        15: {
-            title:"Lab setting (4/18)",
-            description: "Unlock DNA.",
-            cost: new ExpantaNum(2e5),
-            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
-            currencyInternalName:"researchpower",
-            currencyDisplayName:"research power",
-            currencyLayer:"b",
-        },
-    },
-
-    clickables:{
- column:4,
-        11:{
-            display() {return `${player.b.dna[idToNum(this.id)]!=null?`DNA tier ${new ExpantaNum(player.b.dna[idToNum(this.id)])}`:""}`},
-            canClick(){return true},
-            onClick(){
-                if(player.b.chooseNum!=null&&!player.b.dna[player.b.chooseNum]==player.b.dna[idToNum(this.id)])return;
-        if(player.b.chooseNum==null)player.b.chooseNum=idToNum(this.id)
-        else{
-            if(player.b.chooseNum==idToNum(this.id)) player.b.chooseNum=null
-            else if(toNumber(player.b.dna[player.b.chooseNum])==(toNumber(player.b.dna[idToNum(this.id)]))){
-                player.b.dna.splice(idToNum(this.id), 1); 
-                player.b.dna[player.b.chooseNum]++
-                player.b.chooseNum=null
-
-            }
-        }
-
-            },
-        },
-        12:{
-            display() {return `${player.b.dna[idToNum(this.id)]!=null?`DNA tier ${new ExpantaNum(player.b.dna[idToNum(this.id)])}`:""}`},
-            canClick(){return true},
-            onClick(){
-                if(player.b.chooseNum!=null&&!player.b.dna[player.b.chooseNum]==player.b.dna[idToNum(this.id)])return;
-            if(player.b.chooseNum==null)player.b.chooseNum=idToNum(this.id)
-            else{
-                if(player.b.chooseNum==idToNum(this.id)) player.b.chooseNum=null
-                else if(toNumber(player.b.dna[player.b.chooseNum])==(toNumber(player.b.dna[idToNum(this.id)]))){
-                    player.b.dna.splice(idToNum(this.id), 1); 
-                    player.b.dna[player.b.chooseNum]++
-                    player.b.chooseNum=null
-    
-                }
-            }
-    
-                },
-        },
-        13:{
-            display() {return `${player.b.dna[idToNum(this.id)]!=null?`DNA tier ${new ExpantaNum(player.b.dna[idToNum(this.id)])}`:""}`},
-            canClick(){return true},
-            onClick(){
-                if(player.b.chooseNum!=null&&!player.b.dna[player.b.chooseNum]==player.b.dna[idToNum(this.id)])return;
-            else{
-                if(player.b.chooseNum==idToNum(this.id)) player.b.chooseNum=null
-                else if(toNumber(player.b.dna[player.b.chooseNum])==(toNumber(player.b.dna[idToNum(this.id)]))){
-                    player.b.dna.splice(idToNum(this.id), 1); 
-                    player.b.dna[player.b.chooseNum]++
-                    player.b.chooseNum=null
-    
-                }
-            }
-    
-                },
-        },
-        14:{
-            display() {return `${player.b.dna[idToNum(this.id)]!=null?`DNA tier ${new ExpantaNum(player.b.dna[idToNum(this.id)])}`:""}`},
-            canClick(){return true},
-            onClick(){
-                if(player.b.chooseNum!=null&&!player.b.dna[player.b.chooseNum]==player.b.dna[idToNum(this.id)])return;
-            if(player.b.chooseNum==null)player.b.chooseNum=idToNum(this.id)
-            else{
-                if(player.b.chooseNum==idToNum(this.id)) player.b.chooseNum=null
-                else if(toNumber(player.b.dna[player.b.chooseNum])==(toNumber(player.b.dna[idToNum(this.id)]))){
-                    player.b.dna.splice(idToNum(this.id), 1); 
-                    player.b.dna[player.b.chooseNum]++
-                    player.b.chooseNum=null
-    
-                }
-            }
-    
-                },
-
         },
     },
     buyables: {
@@ -1062,16 +969,6 @@ addLayer("b", {
             ],
             unlocked(){return hasUpgrade('p',61)}
         },
-        "DNA": {
-            content: [
-                "main-display",
-                "prestige-button",
-                "resource-display",
-                "blank",
-                "clickables"
-            ],
-            unlocked(){return hasUpgrade('b',15)}
-        },
     },
     buildingeff(){return player.b.power.add(10).logBase(10).pow(2)},
     powergain(){
@@ -1143,8 +1040,4 @@ function toTextMode(a){
     if(a==1) return "Disabled."
     if(a==2) return "bigger than 50% of maxium cost."
     if(a==3) return "bigger than 90% of maxium cost."
-}
-
-function idToNum(a){
-   return ((a-a%10)/10-1)*tmp.b.clickables.column+a%10-1
 }
