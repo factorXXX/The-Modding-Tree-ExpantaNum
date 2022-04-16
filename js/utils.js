@@ -252,9 +252,9 @@ function keepGoing() {
 }
 
 function toNumber(x) {
-	if (x.mag !== undefined) return x.toNumber()
-	if (x + 0 !== x) return parseFloat(x)
-	return x
+	if (new ExpantaNum(x).mag !== undefined) return new ExpantaNum(x).toNumber()
+	if (new ExpantaNum(x) + 0 !== new ExpantaNum(x)) return parseFloat(new ExpantaNum(x))
+	return new ExpantaNum(x)
 }
 
 function updateMilestones(layer) {
