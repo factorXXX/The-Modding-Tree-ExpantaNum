@@ -11,11 +11,15 @@ let modInfo = {
 
 // Set your version in num and name
 let VERSION = {
-	num: "0.0.1.1",
+	num: "0.0.1.2",
 	name: "a BIG tree",
 }
 
 let changelog = `<h1>Changelog:</h1><br>
+<h3>v0.0.1.2</h3><br>
+		- Added testing.<br>
+		- Added 8 upgrade.<br>
+		- Endgame: building upgrade 25.<br>
 <h3>v0.0.1.1</h3><br>
 		- Added 1 buybable.<br>
 		- Added 10 upgrade.<br>
@@ -75,6 +79,7 @@ function getPointGen() {
 	if(hasUpgrade('p',56)) gain=gain.times(1e4)
 	if(hasMilestone('b',2)) gain=gain.times(tmp.b.effect)
 	gain=gain.times(tmp.b.rpeffect)
+	if(player.b.testing) gain=gain.tetr(0.5)
 	return gain
 }
 
@@ -88,7 +93,7 @@ var displayThings = [
 
 // Determines when the game "ends"
 function isEndgame() {
-	return hasUpgrade('b',14)
+	return hasUpgrade('b',25)
 }
 
 
