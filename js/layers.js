@@ -312,6 +312,13 @@ addLayer("p", {
             canAfford(){return player.b.points.gte(40)},
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
         },
+        65: {
+            title:"Calauction times hyper boost",
+            description: "Fame boost Calauction times gain. (Req 60 building)",
+            cost: new ExpantaNum(0),
+            canAfford(){return player.b.points.gte(60)},
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+        },
     },
 update(diff){
     player.p.cooldown=player.p.cooldown.sub(diff).max(0)
@@ -765,6 +772,7 @@ update(diff){
         if(hasUpgrade('b',12)) mult=mult.times(3)
         if(player.b.testing) mult=mult.tetr(0.5)
         if(hasUpgrade('b',24)) mult=mult.times(player.b.testexp.add(1))
+        if(hasUpgrade('b',34)) mult=mult.times(tmp.b.cteffect4)
         return mult
     },
     doReset(resettingLayer) {
@@ -799,7 +807,9 @@ addLayer("b", {
         researchenergy: new ExpantaNum(0),
         testexp:new ExpantaNum(0),
         testing:false,
-                // "points" is the internal name for the main resource of the layer.
+        formula:"",
+        calAns:0,
+        calTimes:new ExpantaNum(0),
     }},
 
     color: "#DCDC48",                       // The color for this layer, which affects many elements.
@@ -818,7 +828,9 @@ addLayer("b", {
     effectDescription(){return "Generate "+format(tmp.b.powergain)+" building power per second"},
     type: "static",                         // Determines the formula used for calculating prestige currency.
     exponent: 1.1,                          // "normal" prestige gain is (currency^exponent).
-    base:4,
+    base(){
+        if(hasUpgrade('b',33)) return new ExpantaNum(2)
+        return new ExpantaNum(4)},
     gainMult() {                            // Returns your multiplier to your gain of the prestige resource.
         return new ExpantaNum(1)               // Factor in any bonuses multiplying gain here.
     },
@@ -830,6 +842,10 @@ addLayer("b", {
         player.b.researchenergy=player.b.researchenergy.add(tmp.b.buyables[21].effect.times(hasUpgrade('b',24)?tmp.b.expeffect4:1).times(diff))
         player.b.researchpower=player.b.researchpower.add(tmp.b.researchpowergain.times(diff))
         if(player.b.researchpower.gte(tmp.b.researchpointnext)&&hasUpgrade('b',11))player.b.researchpoint=player.b.researchpoint.add(1)
+        if(player.b.calAns==0){
+            getCal()
+            calAns()
+        }
     },
    branches:['p'],
     layerShown() { return hasUpgrade('p',55)||player.b.unlocked},          // Returns a bool for if this layer's node should be visible in the tree.
@@ -920,21 +936,70 @@ addLayer("b", {
         },
         25: {
             title:"Lab building 9/19",
-            description: "Unlock calauction. Auto buy prestige buyables. (wip)",
+            description: "Unlock calauction. Auto buy prestige buyables.",
             cost: new ExpantaNum(1e6),
             unlocked(){return hasUpgrade((this.layer),(this.id-1))},
             currencyInternalName:"testexp",
             currencyDisplayName:"EXP",
             currencyLayer:"b",
         },
+        31: {
+            title:"Lab building 10/19",
+            description: "unlock second calauction effect. EXP boost point gain.",
+            cost: new ExpantaNum(100),
+            unlocked(){return hasUpgrade((this.layer),25)},
+            currencyInternalName:"calTimes",
+            currencyDisplayName:"Calauction times",
+            currencyLayer:"b",
+        },
+        32: {
+            title:"Lab building 11/19",
+            description: "unlock third calauction effect. EXP boost calauction times gain.",
+            cost: new ExpantaNum(2e8),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"testexp",
+            currencyDisplayName:"EXP",
+            currencyLayer:"b",
+            effect(){return player.b.testexp.pow(0.3).add(1)},
+            effectDisplay(){return format(upgradeEffect("b",32))+"x"}
+        },
+        33: {
+            title:"Lab building 12/19",
+            description: "Building boost calauction times gain. Building cost base is 2.",
+            cost: new ExpantaNum(4e9),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"testexp",
+            currencyDisplayName:"EXP",
+            currencyLayer:"b",
+        },
+        34:{
+            title:"Lab building 13/19",
+            description: "Unlock final calauction effect.",
+            cost: new ExpantaNum(1.25e11),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"testexp",
+            currencyDisplayName:"EXP",
+            currencyLayer:"b",
+        },
+        35:{
+            title:"Lab building 14/19",
+            description: "Unlock new layer, per lab upgrade multiple point gain by5e4.",
+            cost: new ExpantaNum(3e11),
+            unlocked(){return hasUpgrade((this.layer),(this.id-1))},
+            currencyInternalName:"testexp",
+            currencyDisplayName:"EXP",
+            currencyLayer:"b",
+            effect(){return ExpantaNum.pow(5e4,player.b.upgrades.length)},
+            effectDisplay(){return format(upgradeEffect("b",35))+"x"}
+        },
     },
-
     expgain(){
         let gain=new ExpantaNum(0)
         if(!player.b.testing) return new ExpantaNum(0)
         gain=player.points.div(1e19).max(1).logBase(10).pow(2)
         if(hasUpgrade('b',21)) gain=gain.times(upgradeEffect("b",21))
         if(hasUpgrade('p',64)) gain=gain.times(player.p.fame.add(1))
+        gain=gain.times(tmp.b.cteffect)
         gain=gain.sub(player.b.testexp).floor().max(0)
         return gain
     },
@@ -950,7 +1015,29 @@ addLayer("b", {
                 doReset("b",true)
             },
             canClick(){return true}
-        }
+        },
+        21: {
+            display() {
+                return "True"
+            },
+            onClick(){
+                if(Function(`return ${player.b.formula}`)()==player.b.calAns) player.b.calTimes=player.b.calTimes.add(tmp.b.ctgain)
+                getCal()
+                calAns()
+            },
+            canClick(){return true}
+        },
+        22: {
+            display() {
+                return "False"
+            },
+            onClick(){
+                if(Function(`return ${player.b.formula}`)()!=player.b.calAns) player.b.calTimes=player.b.calTimes.add(tmp.b.ctgain)
+                getCal()
+                calAns()
+            },
+            canClick(){return true}
+        },
     },
     buyables: {
         11: {
@@ -1090,7 +1177,7 @@ let gain=tmp.b.effect
 gain=gain.times(tmp.b.buyables[11].effect)
 gain=gain.times(tmp.b.buyables[12].effect)
 gain=gain.times(tmp.b.expeffect)
-
+if(hasUpgrade('b',31)) gain=gain.times(tmp.b.cteffect2)
 return gain
     },
     researchpowergain(){
@@ -1100,7 +1187,13 @@ return gain
         if(hasUpgrade('b',23)) gain=gain.times(tmp.b.expeffect3)
         return gain
     },
-
+    ctgain(){
+        let gain=new ExpantaNum(1)
+        if(hasUpgrade('b',32)) gain=gain.times(upgradeEffect('b',32))
+        if(hasUpgrade('b',33)) gain=gain.times(player.b.points.add(1))
+        if(hasUpgrade('p',65)) gain=gain.times(player.p.fame.add(1))
+        return gain
+    },
     researchpointnext(){
         return ExpantaNum.pow(10,player.b.researchpoint.add(1).pow(1.1))
     },
@@ -1117,7 +1210,19 @@ return gain
         return player.b.testexp.add(1).pow(2)
     },
     expeffect4(){
-        return player.b.testexp.add(1).logBase(2).pow(4)
+        return player.b.testexp.add(2).logBase(2).pow(4)
+    },
+    cteffect(){
+        return player.b.calTimes.add(2).logBase(2).pow(2)
+    },
+    cteffect2(){
+        return player.b.calTimes.pow(3)
+    },
+    cteffect3(){
+        return player.b.calTimes.logBase(1.01).pow(4)
+    },
+    cteffect4(){
+        return player.b.calTimes.pow(1.2)
     },
     microtabs: {
         "A": {
@@ -1154,10 +1259,39 @@ return gain
                     return a
                 }],
                 "blank",
-                "clickables",
+                ["clickable",11]
             ],
         },
-        },  
+        "Calauction": {
+            content: [
+                ["display-text", () =>{
+                    let a= `
+                    You have ${format(player.b.calTimes)} Calauction times, which give effects.<br>
+                    Effect 1: Boost exp gain by ${format(tmp.b.cteffect)}.<br>
+                    `
+                    if(hasUpgrade('b',31)) a+=`
+                    Effect 2: Boost building power gain by ${format(tmp.b.cteffect2)}.<br>
+                    `
+                    if(hasUpgrade('b',32)) a+=`
+                    Effect 3: Boost point gain by ${format(tmp.b.cteffect3)}.<br>
+                    `
+                    if(hasUpgrade('b',34)) a+=`
+                    Effect 4: Boost money gain by ${format(tmp.b.cteffect4)}.<br>
+                    `
+                    return a
+                }],
+                "blank",
+                ["display-text", () =>{
+                    let a= `
+                    True or False: ${player.b.formula}=${player.b.calAns}
+                    `
+                    return a
+                }],
+                "blank",
+                ["row",[["clickable",21],["clickable",22]]]
+            ],
+        },
+    },
     },
 canBuyMax(){return hasUpgrade('p',63)}
 })
@@ -1206,6 +1340,17 @@ function randomBuyer(){
     }
 }
 
+function getCal(){
+    let num1=Math.ceil(Math.random()*10)
+    let num2=Math.ceil(Math.random()*10)
+    let form=[null,"+","-","*"][Math.ceil(Math.random()*3)]
+    player.b.formula=num1+form+num2
+}
+function calAns(){
+    let num=Math.ceil(Math.random()*2)
+    if(num==1)player.b.calAns=Math.ceil(Math.random()*100)
+    else player.b.calAns=Function(`return ${player.b.formula}`)() 
+}
 function toTextMode(a){
     if(a==1) return "Disabled."
     if(a==2) return "bigger than 50% of maxium cost."
